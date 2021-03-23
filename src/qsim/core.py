@@ -6,16 +6,14 @@ from typing import (NewType, List, Union, Dict, Tuple, Iterable, Any, Callable,
                     Optional, Set)
 from collections import defaultdict
 from queue import PriorityQueue
-from dataclasses import dataclass
-from copy import copy
+from copy import copy, deepcopy
 
-@dataclass(frozen=True, eq=True)
-class QVec:
-  basis:List[np.complex]
+from qsim.types import (QVec, QVecM, QVecOp, QBitOp, QTProd, QId, QInput,
+                        QGraph, SimState)
 
-@dataclass(frozen=True, eq=True)
-class QVecM:
-  mat:np.array
+
+def constvec(val:complex, nqbits:int=1)->QVec:
+  return QVec([val]*(2**nqbits))
 
 def nqbits(v:QVec)->int:
   n=log2(len(v.basis))
@@ -24,7 +22,7 @@ def nqbits(v:QVec)->int:
   return int(n)
 
 def nqbitsM(v:QVecM)->int:
-  n=v.mat.shape[0]
+  n=log2(v.mat.shape[0])
   assert float(int(n))==n, \
     f"QVecM should contain (2^N)^2 elements, not ({v.mat.shape[0]}^2)"
   return int(n)
@@ -41,17 +39,6 @@ def mkstate(bas:List[np.complex])->QVec:
   assert float(int(nqbits))==nqbits, \
     f"State basis should contain 2^N elements, not {len(bas)}"
   return QVec(bas)
-
-QVecOp=Union['QBitOp','QTProd']
-
-@dataclass(frozen=True, eq=True)
-class QBitOp:
-  mat:np.array
-
-@dataclass(frozen=True, eq=True)
-class QTProd:
-  a:QVecOp
-  b:QVecOp
 
 def tprod(a:QVecOp,b:QVecOp)->QVecOp:
   return QTProd(a,b)
@@ -94,30 +81,19 @@ def opCNOT()->QVecOp:
                           [0.0,0.0,0.0,1.0],
                           [0.0,0.0,1.0,0.0]]))
 
-QId=NewType('QId',int)
-
-@dataclass(frozen=True, eq=True)
-class QInput:
-  n:int
-
-@dataclass(frozen=True, eq=True)
-class QGraph:
-  graph:Dict[QId, Tuple[Union[QVecOp,QInput], List[QId]]]
-
 def nqbitsG(g:QGraph, qid:QId)->int:
   node:Union[QVecOp,QInput]=g.graph[qid][0]
   if isinstance(node,QBitOp) or isinstance(node,QTProd):
     return nqbitsOp(node)
   elif isinstance(node, QInput):
-    return 1
+    return node.nqbits
   else:
     assert False, f"Invalid node {qid}: {node}"
 
-def addinput(g:QGraph)->Tuple[QId,QGraph]:
+def addinput(g:QGraph, nqbits:int)->Tuple[QId,QGraph]:
   g2=copy(g.graph)
   i=QId(len(g2.keys()))
-  n=len([i[0] for i in g2.values() if isinstance(i[0],QInput)])
-  g2.update({i:(QInput(n),[])})
+  g2.update({i:(QInput(nqbits),[])})
   return i,QGraph(g2)
 
 def addop(g:QGraph, op:QVecOp, inp:List[QId])->Tuple[QId,QGraph]:
@@ -133,12 +109,9 @@ def addop(g:QGraph, op:QVecOp, inp:List[QId])->Tuple[QId,QGraph]:
 
 def kahntsort(nodes:Iterable[Any],
               inbounds:Callable[[Any],Set[Any]])->Optional[List[Any]]:
-  """ Kahn's algorithm for topological sorting.
+  """ Kahn's algorithm for Graph topological sorting.
   Take iterable `nodes` and pure-function `inbounds`. Output list of nodes in
-  topological order, or None if graph has a cycle.
-
-  One modification is that we use PriorityQueue insted of plain list to put
-  take name-order into account.
+  topological order or `None` if graph has a cycle.
   """
   indeg:dict={}
   outbounds:dict=defaultdict(set)
@@ -154,7 +127,6 @@ def kahntsort(nodes:Iterable[Any],
     if indeg[n]==0:
       q.put(n)
     sz+=1
-
   acc=[]
   cnt=0
   while not q.empty():
@@ -165,17 +137,12 @@ def kahntsort(nodes:Iterable[Any],
       if indeg[on]==0:
         q.put(on)
     cnt+=1
-
   return None if cnt>sz else acc
 
 def schedule(g:QGraph)->List[QId]:
   s=kahntsort(g.graph.keys(), lambda k:set(g.graph[k][1]))
   assert s is not None, "QGraph has a cycle!"
   return s
-
-@dataclass(frozen=True, eq=True)
-class SimState:
-  vecop_cache:Dict[str,np.array]
 
 def getop(ss:SimState, op:QVecOp)->np.array:
   sop=str(op)
@@ -190,23 +157,21 @@ def apply_opM(ss:SimState, op:QVecOp, vec:QVecM)->QVecM:
 
 def evaluate(ss:SimState,
              g:QGraph,
-             s:List[QId],
+             sched:List[QId],
              state:Dict[QId,QVecM])->Dict[QId,QVecM]:
-  for qid in s:
+  state2=deepcopy(state)
+  for qid in sched:
     op,inputs=g.graph[qid]
-    for iid in inputs:
-      assert iid in state.keys(), "Input {iid} is not yet evaluated (impossible!)"
-  # TODO
-
-
-
-
-# def eval_chainM(ss:SimState, chain:QChain, vec:QVecM)->QVecM:
-#   acc=vec
-#   for vo in chain.chain:
-#     acc=apply_opM(ss, vo, acc)
-#   return acc
-
-# def eval_chain(ss:SimState, chain:QChain, vec:QVec)->QVec:
-#   return mat2vec(eval_chainM(ss, chain, vec2mat(vec)))
+    if isinstance(op,QInput):
+      assert qid in state, (
+        f"Node {qid} has no inputs, so we need to know its value")
+    elif isinstance(op,QBitOp) or isinstance(op,QTProd):
+      assert len(inputs)==1, (
+        f"We don't support nodes with multiple inputs, but node {qid} has "
+        f"{len(inputs)}")
+      assert inputs[0] in state2, (
+        f"Value of node {inputs[0]} is assumed to be calculated, but it is not.")
+      inp=state2[inputs[0]]
+      state2[qid]=apply_opM(ss,op,inp)
+  return state2
 
