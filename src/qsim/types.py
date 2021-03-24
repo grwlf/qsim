@@ -6,10 +6,6 @@ from numpy import array, complex as np_complex
 
 @dataclass(frozen=True, eq=True)
 class QVec:
-  basis:List[np_complex]
-
-@dataclass(frozen=True, eq=True)
-class QVecM:
   mat:array
 
 QVecOp=Union['QBitOp','QTProd']

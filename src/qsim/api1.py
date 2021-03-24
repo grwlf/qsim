@@ -1,9 +1,9 @@
 from typing import List, Union, Optional, Dict, Any, TypeVar, Iterable, Tuple
 
-from qsim import (QGraph, SimState, QId, QInput, QVecM, QVecOp, QBitOp, QVec,
-                  evaluate, addinput, addop, schedule, nqbits, nqbitsG,
-                  nqbitsOp, tprod, opI, opH, opX, opY, opZ, opR, opCNOT,
-                  constvec, vec2mat)
+from qsim.core import (QGraph, SimState, QId, QInput, QVecOp, QBitOp, QVec,
+                       evaluate, addinput, addop, schedule, nqbits, nqbitsG,
+                       nqbitsOp, tprod, opI, opH, opX, opY, opZ, opR, opCNOT,
+                       constvec, mkvec, mkvecI)
 
 from numpy import array
 
@@ -38,11 +38,18 @@ class Circuit:
     self.state0:Optional[QVec] = None
     self.pending:Dict[tuple,QVecOp] = {}
 
-  def initialize(self, state:List[complex])->None:
-    self.state0 = QVec(state)
-    assert nqbitsG(self.graph, self.headid) == nqbits(self.state0), (
-      f"Initial state encode {nqbits(self.state0)} qbits, "
-      f"{nqbitsG(self.graph, self.headid)} qbits expected")
+  def initialize(self, state:Union[List[int],List[complex]])->None:
+    if all([isinstance(x,complex) for x in state]):
+      state_ = mkvec(state)
+    elif all([isinstance(x,int) for x in state]):
+      state_ = mkvecI(state) # type:ignore
+    else:
+      assert False, "Invalid initial state representation"
+    assert nqbitsG(self.graph, self.headid) == nqbits(state_), (
+      f"Initial state encodes {nqbits(state_)} qbits, expected "
+      f"{nqbitsG(self.graph, self.headid)} qbits")
+    self.state0 = state_
+
 
   def apply(self):
     n = nqbitsG(self.graph, self.headid) - 1
@@ -89,7 +96,7 @@ class Circuit:
       self.apply()
     state=evaluate(ss, self.graph,
                    sched=schedule(self.graph),
-                   state={self.headid:vec2mat(self.state0)})
+                   state={self.headid:self.state0})
     return state[self.tailid]
 
 

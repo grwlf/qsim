@@ -1,5 +1,6 @@
 import numpy as np
 
+from numpy import array
 from math import log2
 from os.path import join
 from typing import (NewType, List, Union, Dict, Tuple, Iterable, Any, Callable,
@@ -8,7 +9,7 @@ from collections import defaultdict
 from queue import PriorityQueue
 from copy import copy, deepcopy
 
-from qsim.types import (QVec, QVecM, QVecOp, QBitOp, QTProd, QId, QInput,
+from qsim.types import (QVec, QVecOp, QBitOp, QTProd, QId, QInput,
                         QGraph, SimState)
 
 
@@ -16,23 +17,18 @@ def constvec(val:complex, nqbits:int=1)->QVec:
   return QVec([val]*(2**nqbits))
 
 def nqbits(v:QVec)->int:
-  n=log2(len(v.basis))
-  assert float(int(n))==n, \
-    f"QVec should contain 2^N elements, not {len(v.basis)}"
-  return int(n)
-
-def nqbitsM(v:QVecM)->int:
   n=log2(v.mat.shape[0])
   assert float(int(n))==n, \
-    f"QVecM should contain (2^N)^2 elements, not ({v.mat.shape[0]}^2)"
+    f"QVec should contain (2^N)^2 elements, not ({v.mat.shape[0]}^2)"
   return int(n)
 
-def vec2mat(v:QVec)->QVecM:
-  return QVecM(np.array(v.basis, dtype=np.complex)*
-               np.eye(int(2**nqbits(v)), dtype=np.complex))
+def mkvec(v:Union[List[complex],array])->QVec:
+  return QVec(array(v))
 
-def mat2vec(v:QVecM)->QVec:
-  return np.matmul(np.ones([1,int(2**nqbitsM(v))],dtype=np.complex), v.mat)
+def mkvecI(v:List[int])->QVec:
+  z=np.zeros([2**len(v)])
+  z[int(''.join(map(str,v)),base=2)]=1
+  return QVec(z)
 
 def mkstate(bas:List[np.complex])->QVec:
   nqbits=len(bas)
@@ -48,7 +44,7 @@ def qbitop(mat:np.array)->QVecOp:
 
 def nqbitsOp(op:QVecOp)->int:
   if isinstance(op, QBitOp):
-    return nqbitsM(QVecM(op.mat))
+    return nqbits(QVec(op.mat))
   elif isinstance(op, QTProd):
     return nqbitsOp(op.a)+nqbitsOp(op.b)
   else:
@@ -152,13 +148,13 @@ def getop(ss:SimState, op:QVecOp)->np.array:
   ss.vecop_cache[sop]=mat
   return mat
 
-def apply_opM(ss:SimState, op:QVecOp, vec:QVecM)->QVecM:
-  return QVecM(np.matmul(getop(ss,op),vec.mat))
+def apply_opM(ss:SimState, op:QVecOp, vec:QVec)->QVec:
+  return QVec(np.matmul(getop(ss,op),vec.mat))
 
 def evaluate(ss:SimState,
              g:QGraph,
              sched:List[QId],
-             state:Dict[QId,QVecM])->Dict[QId,QVecM]:
+             state:Dict[QId,QVec])->Dict[QId,QVec]:
   state2=deepcopy(state)
   for qid in sched:
     op,inputs=g.graph[qid]
