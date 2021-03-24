@@ -55,7 +55,7 @@ class Circuit:
     n = nqbitsG(self.graph, self.headid) - 1
     op:Optional[QVecOp] = None
     while n>=0:
-      if n in concat(self.pending.keys()):
+      if n in concat(list(self.pending.keys())):
         ns = [k for k in self.pending.keys() if n in k]
         assert len(ns)==1, f"More than one op change qbit {n}: {ns}"
         op2 = self.pending[tuple(ns[0])]
