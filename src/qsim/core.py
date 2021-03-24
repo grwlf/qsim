@@ -166,7 +166,7 @@ def evaluate(ss:SimState,
         f"We don't support nodes with multiple inputs, but node {qid} has "
         f"{len(inputs)}")
       assert inputs[0] in state2, (
-        f"Value of node {inputs[0]} is assumed to be calculated, but it is not.")
+        f"Value of node {inputs[0]} is assumed exist, but it is not.")
       inp=state2[inputs[0]]
       state2[qid]=apply_opM(ss,op,inp)
   return state2

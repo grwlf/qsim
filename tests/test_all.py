@@ -59,3 +59,11 @@ def test_api1_223():
   state = c.execute()
   print(state.mat)
 
+def test_api1_3():
+  c = circuit(qbit_count=1)
+  c.initialize([0])
+  c.x.on(0)
+  c.h.on(0)
+  state = c.execute()
+  print(state.mat)
+  assert_allclose(state.mat,[1./sqrt(2),-1./sqrt(2)])
