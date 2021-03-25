@@ -34,6 +34,7 @@ setup(
   test_suite='pytest',
   tests_require=['pytest', 'pytest-mypy', 'hypothesis'],
   setup_requires=['setuptools_scm'],
+  install_requires=['numpy'],
 )
 
 

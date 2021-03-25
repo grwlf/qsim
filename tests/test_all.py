@@ -1,7 +1,9 @@
 from numpy import allclose
 from numpy.testing import assert_allclose
 from math import sqrt, pi
-from qsim import *
+from qsim import (QVec, circuit,addinput, addop, tprod, opX, opI, opH, evaluate,
+                  mkvec, QGraph, braket, schedule, opmatrix)
+
 
 def test_core_multyinput():
   g=QGraph({})

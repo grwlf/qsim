@@ -13,6 +13,7 @@ buildPythonPackage {
     ) ./.;
 
   preConfigure = ''
+    export PATH="${pkgs.git}/bin:$PATH"
     if ! test -d /build/qsim/.git ; then
       echo "Looks like QSim is a submodule of some other repo."\
            "\`nix-build\` is unable to detect its version, unfortunately."\
@@ -25,6 +26,8 @@ buildPythonPackage {
   buildInputs = [ setuptools_scm ];
 
   checkInputs = [ pytest pytest-mypy hypothesis ];
+
+  propagatedBuildInputs = [ numpy ];
 
   checkPhase = ''
     pytest
