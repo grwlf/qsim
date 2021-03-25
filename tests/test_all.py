@@ -8,40 +8,47 @@ def test_core_multyinput():
   i1,g=addinput(g,1)
   i2,g=addinput(g,1)
   o1,g=addop(g,tprod(opX(),opX()),[i1,i2])
-  ss=SimState({})
-  s=evaluate(ss,g,schedule(g),{i1:braket([1]),i2:braket([0])})
+  s=evaluate({i1:braket([1]),i2:braket([0])},g,schedule(g))
   assert_allclose(s[o1].mat,braket([0,1]).mat)
 
 def test_core_18():
   g=QGraph({})
   i1,g=addinput(g,1)
   o1,g=addop(g,opX(),[i1])
-  ss=SimState({})
-  s=evaluate(ss,g,schedule(g),{i1:QVec([1.,0.])})
+  s=evaluate({i1:QVec([1.,0.])},g,schedule(g))
   assert_allclose(s[o1].mat,[0.,1.])
 
 def test_core_111():
   g=QGraph({})
   i1,g=addinput(g,2)
   o1,g=addop(g,tprod(opX(),opI()),[i1])
-  ss=SimState({})
-  s=evaluate(ss,g,schedule(g),{i1:mkvec([1.,0.,0.,0.])})
+  s=evaluate({i1:mkvec([1.,0.,0.,0.])},g,schedule(g))
   assert_allclose(s[o1].mat,[0.,0.,1.,0,])
 
 def test_core_112():
   g=QGraph({})
   i1,g=addinput(g,2)
   o1,g=addop(g,tprod(opX(),opH()),[i1])
-  ss=SimState({})
-  s=evaluate(ss,g,schedule(g),{i1:mkvec([1.,0.,0.,0.])})
+  s=evaluate({i1:mkvec([1.,0.,0.,0.])},g,schedule(g))
   assert_allclose(s[o1].mat,[0.,0.,1./sqrt(2),1./sqrt(2)])
+
+def test_core_112_opmatrix():
+  g=QGraph({})
+  i1,g=addinput(g,2)
+  o1,g=addop(g,tprod(opX(),opH()),[i1])
+  s=opmatrix(g,schedule(g))
+  print(s[o1].mat)
+  assert_allclose(s[o1].mat,
+                  [[ 0.        , 0.        , 0.70710678, 0.70710678],
+                   [ 0.        , 0.        , 0.70710678,-0.70710678],
+                   [ 0.70710678, 0.70710678, 0.        , 0.        ],
+                   [ 0.70710678,-0.70710678, 0.        , 0.        ]])
 
 def test_core_112_2():
   g=QGraph({})
   i1,g=addinput(g,2)
   o1,g=addop(g,tprod(opX(),opH()),[i1])
-  ss=SimState({})
-  s=evaluate(ss,g,schedule(g),{i1:braket([0,1])})
+  s=evaluate({i1:braket([0,1])},g,schedule(g))
   print(s[o1].mat)
   assert_allclose(s[o1].mat,[0,0,1./sqrt(2),-1./sqrt(2)])
 

@@ -4,13 +4,13 @@ from numpy import array
 from math import log2
 from os.path import join
 from typing import (NewType, List, Union, Dict, Tuple, Iterable, Any, Callable,
-                    Optional, Set)
+                    Optional, Set, TypeVar)
 from collections import defaultdict
 from queue import PriorityQueue
 from copy import copy, deepcopy
+from dataclasses import dataclass
 
-from qsim.types import (QVec, QVecOp, QBitOp, QTProd, QId, QInput,
-                        QGraph, SimState)
+from qsim.types import (QVec, QVecOp, QBitOp, QTProd, QId, QInput, QGraph)
 
 
 def constvec(val:complex, nqbits:int=1)->QVec:
@@ -140,6 +140,14 @@ def schedule(g:QGraph)->List[QId]:
   assert s is not None, "QGraph has a cycle!"
   return s
 
+
+@dataclass(frozen=True, eq=True)
+class SimState:
+  vecop_cache:Dict[str,array]
+
+def mkss()->SimState:
+  return SimState({})
+
 def getop(ss:SimState, op:QVecOp)->np.array:
   sop=str(op)
   if sop in ss.vecop_cache:
@@ -151,10 +159,10 @@ def getop(ss:SimState, op:QVecOp)->np.array:
 def apply_opM(ss:SimState, op:QVecOp, vec:QVec)->QVec:
   return QVec(np.matmul(getop(ss,op),vec.mat))
 
-def evaluate(ss:SimState,
+def evaluate(state:Dict[QId,QVec],
              g:QGraph,
-             sched:List[QId],
-             state:Dict[QId,QVec])->Dict[QId,QVec]:
+             sched:List[QId])->Dict[QId,QVec]:
+  ss=mkss()
   state2=deepcopy(state)
   for qid in sched:
     op,inputs=g.graph[qid]
@@ -171,4 +179,22 @@ def evaluate(ss:SimState,
     else:
       assert False, f"Invalid operation type {op}"
   return state2
+
+def opmatrix(g:QGraph, sched:List[QId])->Dict[QId,QVec]:
+  state2:Dict[QId,QVec]={}
+  ss=mkss()
+  for qid in sched:
+    op,inputs=g.graph[qid]
+    if isinstance(op,QInput):
+      state2[qid]=QVec(np.eye(2**op.nqbits))
+    elif isinstance(op,QBitOp) or isinstance(op,QTProd):
+      acc:Optional[QVec]=None
+      for i in inputs:
+        acc=QVec(np.kron(acc.mat,state2[i].mat)) if acc is not None else state2[i]
+      assert acc is not None, f"Operation {str(op)} seems to have no inputs"
+      state2[qid]=QVec(np.matmul(getop(ss,op),acc.mat))
+    else:
+      assert False, f"Invalid operation type {op}"
+  return state2
+
 

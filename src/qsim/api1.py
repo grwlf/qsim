@@ -3,7 +3,7 @@ from typing import List, Union, Optional, Dict, Any, TypeVar, Iterable, Tuple
 from qsim.core import (QGraph, SimState, QId, QInput, QVecOp, QBitOp, QVec,
                        evaluate, addinput, addop, schedule, nqbits, nqbitsG,
                        nqbitsOp, tprod, opI, opH, opX, opY, opZ, opR, opCNOT,
-                       constvec, mkvec, braket)
+                       constvec, mkvec, braket, mkss)
 
 from numpy import array
 
@@ -91,12 +91,11 @@ class Circuit:
 
   def execute(self)->array:
     assert self.state0 is not None, "Circuit is not Initialized"
-    ss = SimState({})
+    # ss = SimState({})
     if self.pending:
       self.apply()
-    state=evaluate(ss, self.graph,
-                   sched=schedule(self.graph),
-                   state={self.headid:self.state0})
+    state=evaluate({self.headid:self.state0}, self.graph,
+                   sched=schedule(self.graph))
     return state[self.tailid]
 
 

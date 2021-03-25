@@ -29,7 +29,3 @@ class QInput:
 class QGraph:
   graph:Dict[QId, Tuple[Union[QVecOp,QInput], List[QId]]]
 
-@dataclass(frozen=True, eq=True)
-class SimState:
-  vecop_cache:Dict[str,array]
-
