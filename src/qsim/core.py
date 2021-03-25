@@ -168,5 +168,7 @@ def evaluate(ss:SimState,
         acc=QVec(np.kron(acc.mat,state2[i].mat)) if acc is not None else state2[i]
       assert acc is not None, f"Operation {str(op)} seems to have no inputs"
       state2[qid]=apply_opM(ss,op,acc)
+    else:
+      assert False, f"Invalid operation type {op}"
   return state2
 

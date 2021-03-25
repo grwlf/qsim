@@ -3,14 +3,13 @@ from numpy.testing import assert_allclose
 from math import sqrt, pi
 from qsim import *
 
-def test_core_X():
+def test_core_multyinput():
   g=QGraph({})
   i1,g=addinput(g,1)
   i2,g=addinput(g,1)
   o1,g=addop(g,tprod(opX(),opX()),[i1,i2])
   ss=SimState({})
-  s=evaluate(ss,g,schedule(g),{i1:braket([1]),
-                               i2:braket([0])})
+  s=evaluate(ss,g,schedule(g),{i1:braket([1]),i2:braket([0])})
   assert_allclose(s[o1].mat,braket([0,1]).mat)
 
 def test_core_18():
