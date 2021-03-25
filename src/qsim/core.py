@@ -25,7 +25,7 @@ def nqbits(v:QVec)->int:
 def mkvec(v:Union[List[complex],array])->QVec:
   return QVec(array(v))
 
-def mkvecI(v:List[int])->QVec:
+def braket(v:List[int])->QVec:
   z=np.zeros([2**len(v)])
   z[int(''.join(map(str,v)),base=2)]=1
   return QVec(z)
@@ -160,14 +160,13 @@ def evaluate(ss:SimState,
     op,inputs=g.graph[qid]
     if isinstance(op,QInput):
       assert qid in state, (
-        f"Node {qid} has no inputs, so we need to know its value")
+        f"State doesn't contain the value for input node {qid}.")
     elif isinstance(op,QBitOp) or isinstance(op,QTProd):
-      assert len(inputs)==1, (
-        f"We don't support nodes with multiple inputs, but node {qid} has "
-        f"{len(inputs)}")
-      assert inputs[0] in state2, (
-        f"Value of node {inputs[0]} is assumed exist, but it is not.")
-      inp=state2[inputs[0]]
-      state2[qid]=apply_opM(ss,op,inp)
+      acc:Optional[QVec]=None
+      for i in inputs:
+        assert i in state2, f"State doesn't contain the value of node {i}."
+        acc=QVec(np.kron(acc.mat,state2[i].mat)) if acc is not None else state2[i]
+      assert acc is not None, f"Operation {str(op)} seems to have no inputs"
+      state2[qid]=apply_opM(ss,op,acc)
   return state2
 

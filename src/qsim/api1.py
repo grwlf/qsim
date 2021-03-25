@@ -3,7 +3,7 @@ from typing import List, Union, Optional, Dict, Any, TypeVar, Iterable, Tuple
 from qsim.core import (QGraph, SimState, QId, QInput, QVecOp, QBitOp, QVec,
                        evaluate, addinput, addop, schedule, nqbits, nqbitsG,
                        nqbitsOp, tprod, opI, opH, opX, opY, opZ, opR, opCNOT,
-                       constvec, mkvec, mkvecI)
+                       constvec, mkvec, braket)
 
 from numpy import array
 
@@ -42,7 +42,7 @@ class Circuit:
     if all([isinstance(x,complex) for x in state]):
       state_ = mkvec(state)
     elif all([isinstance(x,int) for x in state]):
-      state_ = mkvecI(state) # type:ignore
+      state_ = braket(state) # type:ignore
     else:
       assert False, "Invalid initial state representation"
     assert nqbitsG(self.graph, self.headid) == nqbits(state_), (
