@@ -1,10 +1,81 @@
+QSim
+====
+
+Общее описание
+--------------
+
+Данный репозиторий содержит простой квантовый симулятор, написанный на языке
+Python3 с использованием библиотеки статической типизации
+[MyPy](https://github.com/python/mypy).
+
+Симулятор состоит из трех главных файлов:
+
+* [qsim.types](./src/qsim/types.py) Объявления типов данных.
+* [qsim.core](./src/qsim/core.py) Базовые функции.
+* [qsim.api1](./src/qsim/api1.py) Упрощенное объектно-ориентированное API
+  конечного пользователя.
+
+Типы данных
+-----------
+
+В симуляторе используются следующие группы данных:
+
+1. Типы данных для задания условий симуляции:
+
+   ```{.python .cb.code
+       include_file=src/qsim/types.py
+       include_after_string="# README:S1BEGIN"
+       include_before_string="# README:S1END"}
+   ```
+   * `QVec` служит для задания векторов состояний
+   * `QVecOp` тип-синоним, перечисляющий варианты описания квантовых операций:
+     - `QBitOp` в виде матрицы
+     - `QTProd` в виде вертикальной комбинации других операций
+
+2. Типы данных для выполнения симуляции:
+
+   ```{.python .cb.code
+       include_file=src/qsim/types.py
+       include_after_string="# README:S2BEGIN"
+       include_before_string="# README:S2END"}
+   ```
+
+   * `QGraph` Описывает граф квантовых операций, граф задан перечислением вершин
+     и рёбер. С уздами графа ассоциированы квантовые операции. Вспомогательные
+     типы данных:
+     - `QId` - Идентификатор узла. Тип-обертка над числом для удобства статической
+       типизации.
+     - `QInput` - Тип входного узла.
+
+Базовые функции
+---------------
+
+Основной функционал реализован в модуле `qsim.core`. Также как и с типами, можно
+выделить две основные группы функций:
+
+1. Функции для задания условий симуляции
+2. Функции для выполнения расчетов
 
 
+Примеры использования
+---------------------
 
+### Примеры использования базового интерфейса
+
+#### Расчет матрицы комбинированной операции `X * H`.
+
+``` {.python .cb.nb show=code+stdout+stderr}
+from qsim import QGraph, addinput, addop, opX, opH, schedule, opmatrix, tprod
+g=QGraph({})
+i1,g=addinput(g,2)
+o1,g=addop(g,tprod(opX(),opH()),[i1])
+s=opmatrix(g,schedule(g))
+print(s[o1].mat)
+```
 
 
 References
-----------
+==========
 
 1. [Linear Algebra for Quantum Computation](https://link.springer.com/content/pdf/bbm%3A978-1-4614-6336-8%2F1.pdf)
 2. [ScyPy](https://docs.sympy.org/latest/modules/physics/quantum/tensorproduct.html)
