@@ -2,16 +2,14 @@ from typing import List, Union, Optional, Dict, Any, TypeVar, Iterable, Tuple
 
 from qsim.core import (QGraph, SimState, QId, QInput, QVecOp, QBitOp, QVec,
                        evaluate, addinput, addop, schedule, nqbits, nqbitsG,
-                       nqbitsOp, tprod, opI, opH, opX, opY, opZ, opR, opCNOT,
-                       constvec, mkvec, braket, mkss)
+                       nqbitsOp, opI, opH, opX, opY, opZ, opR, opCNOT,
+                       constvec, mkvec, braket, opmatrix, tprod)
 
-from numpy import array
+from numpy import array, kron
 
-from itertools import chain
+from itertools import chain, combinations
 
-_A=TypeVar('_A')
-def concat(l:List[Tuple[_A,...]])->Tuple[_A,...]:
-  return tuple(chain.from_iterable(l))
+InputId = Union[int,tuple]
 
 class OpHandle:
 
@@ -19,54 +17,40 @@ class OpHandle:
     self.circuit:'Circuit' = c
     self.op = op
 
-  def on(self, input_id:Union[int,List[int]])->None:
-    if isinstance(input_id, int):
-      input_id = [input_id]
-    if isinstance(input_id,list):
-      if any([n in concat(list(self.circuit.pending.keys())) for n in input_id]):
-        self.circuit.apply()
-      self.circuit.pending[tuple(input_id)] = self.op
-    else:
-      assert False, f"Expected input of type List[int] or int, not {input_id}"
+  def on(self, input_ids:Union[InputId,List[InputId]])->None:
+    input_id_l:List[InputId] = [input_ids] if not isinstance(input_ids,list) else input_ids
+    input_id_2 = tuple(input_id_l) if len(input_id_l)>1 else input_id_l[0]
+    qid, self.circuit.graph = \
+      addop(self.circuit.graph, self.op,
+            [self.circuit.tails[x] for x in input_id_l])
+    self.circuit.tails[input_id_2] = qid # type:ignore
 
 class Circuit:
 
   def __init__(self, qbit_count:int):
     self.graph = QGraph({})
-    self.headid, self.graph = addinput(self.graph, qbit_count)
-    self.tailid = self.headid
-    self.state0:Optional[QVec] = None
-    self.pending:Dict[tuple,QVecOp] = {}
+    self.state0:Dict[QId,QVec] = {}
+    self.state:Optional[Dict[QId,QVec]] = None
+    self.mstate:Optional[Dict[QId,QVec]] = None
+    self.tails:Dict[InputId,QId] = {}
+    self.heads:Dict[int,QId]={}
+    for nbit in range(qbit_count):
+      qid,self.graph = addinput(self.graph, 1)
+      self.heads[nbit] = qid
+      self.tails[nbit] = qid
 
-  def initialize(self, state:Union[List[int],List[complex]])->None:
-    if all([isinstance(x,complex) for x in state]):
-      state_ = mkvec(state)
-    elif all([isinstance(x,int) for x in state]):
-      state_ = braket(state) # type:ignore
+
+  def initialize(self, state:Union[List[int],List[List[complex]]])->None:
+    if isinstance(state,list) and all([isinstance(x,complex) for x in state]):
+      assert len(state) == len(self.heads.keys())
+      for (n,qid),value in zip(self.heads.items(),state):
+        self.state0[qid] = mkvec(value) # type:ignore
+    elif isinstance(state,list) and all([isinstance(x,int) for x in state]):
+      assert len(state) == len(self.heads.keys())
+      for (n,qid),value in zip(self.heads.items(),state):
+        self.state0[qid] = braket([value]) # type:ignore
     else:
       assert False, "Invalid initial state representation"
-    assert nqbitsG(self.graph, self.headid) == nqbits(state_), (
-      f"Initial state encodes {nqbits(state_)} qbits, expected "
-      f"{nqbitsG(self.graph, self.headid)} qbits")
-    self.state0 = state_
-
-
-  def apply(self):
-    n = nqbitsG(self.graph, self.headid) - 1
-    op:Optional[QVecOp] = None
-    while n>=0:
-      if n in concat(list(self.pending.keys())):
-        ns = [k for k in self.pending.keys() if n in k]
-        assert len(ns)==1, f"More than one op change qbit {n}: {ns}"
-        op2 = self.pending[tuple(ns[0])]
-        n -= nqbitsOp(op2)
-      else:
-        op2 = opI()
-        n -= 1
-      op = tprod(op, op2) if op is not None else op2
-    assert op is not None
-    self.tailid, self.graph = addop(self.graph, op, [self.tailid])
-    self.pending = {}
 
   @property
   def x(self)->OpHandle:
@@ -89,14 +73,16 @@ class Circuit:
   def cnot(self)->OpHandle:
     return OpHandle(self, opCNOT())
 
-  def execute(self)->array:
-    assert self.state0 is not None, "Circuit is not Initialized"
-    # ss = SimState({})
-    if self.pending:
-      self.apply()
-    state=evaluate({self.headid:self.state0}, self.graph,
-                   sched=schedule(self.graph))
-    return state[self.tailid]
+  def execute(self)->Dict[Union[int,tuple],QVec]:
+    assert self.state0 is not None, "Circuit is not initialized"
+    self.state = evaluate(self.state0, self.graph,
+                          sched=schedule(self.graph))
+    self.mstate = opmatrix(self.graph, sched=schedule(self.graph))
+    return {code:self.state[self.tails[code]] for code in self.tails.keys()}
+
+  def opmatrix(self, *args)->QVec:
+    assert self.mstate is not None
+    return tprod([self.mstate[self.tails[a]] for a in args])
 
 
 def circuit(*args, **kwargs)->Circuit:

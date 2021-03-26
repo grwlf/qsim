@@ -36,7 +36,14 @@ def mkstate(bas:List[np.complex])->QVec:
     f"State basis should contain 2^N elements, not {len(bas)}"
   return QVec(bas)
 
-def tprod(a:QVecOp,b:QVecOp)->QVecOp:
+def tprod(qvs:List[QVec])->QVec:
+  acc:Optional[QVec]=None
+  for qv in qvs:
+    acc=QVec(np.kron(acc.mat,qv.mat)) if acc is not None else qv
+  assert acc is not None
+  return acc
+
+def pairop(a:QVecOp,b:QVecOp)->QVecOp:
   return QTProd(a,b)
 
 def qbitop(mat:np.array)->QVecOp:
@@ -173,9 +180,7 @@ def evaluate(state:Dict[QId,QVec],
       acc:Optional[QVec]=None
       for i in inputs:
         assert i in state2, f"State doesn't contain the value of node {i}."
-        acc=QVec(np.kron(acc.mat,state2[i].mat)) if acc is not None else state2[i]
-      assert acc is not None, f"Operation {str(op)} seems to have no inputs"
-      state2[qid]=apply_opM(ss,op,acc)
+      state2[qid]=apply_opM(ss,op,tprod([state2[i] for i in inputs]))
     else:
       assert False, f"Invalid operation type {op}"
   return state2
@@ -188,11 +193,7 @@ def opmatrix(g:QGraph, sched:List[QId])->Dict[QId,QVec]:
     if isinstance(op,QInput):
       state2[qid]=QVec(np.eye(2**op.nqbits))
     elif isinstance(op,QBitOp) or isinstance(op,QTProd):
-      acc:Optional[QVec]=None
-      for i in inputs:
-        acc=QVec(np.kron(acc.mat,state2[i].mat)) if acc is not None else state2[i]
-      assert acc is not None, f"Operation {str(op)} seems to have no inputs"
-      state2[qid]=QVec(np.matmul(getop(ss,op),acc.mat))
+      state2[qid]=QVec(np.matmul(getop(ss,op),tprod([state2[i] for i in inputs]).mat))
     else:
       assert False, f"Invalid operation type {op}"
   return state2
