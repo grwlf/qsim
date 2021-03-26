@@ -3,7 +3,7 @@ from typing import List, Union, Optional, Dict, Any, TypeVar, Iterable, Tuple
 from qsim.core import (QGraph, SimState, QId, QInput, QVecOp, QBitOp, QVec,
                        evaluate, addinput, addop, schedule, nqbits, nqbitsG,
                        nqbitsOp, opI, opH, opX, opY, opZ, opR, opCNOT,
-                       constvec, mkvec, braket, opmatrix, tprod)
+                       mkvec, braket, opmatrix, tprod)
 
 from numpy import array, kron
 

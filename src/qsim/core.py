@@ -13,15 +13,6 @@ from dataclasses import dataclass
 from qsim.types import (QVec, QVecOp, QBitOp, QTProd, QId, QInput, QGraph)
 
 
-def constvec(val:complex, nqbits:int=1)->QVec:
-  return QVec([val]*(2**nqbits))
-
-def nqbits(v:QVec)->int:
-  n=log2(v.mat.shape[0])
-  assert float(int(n))==n, \
-    f"QVec should contain (2^N)^2 elements, not ({v.mat.shape[0]}^2)"
-  return int(n)
-
 def mkvec(v:Union[List[complex],array])->QVec:
   return QVec(array(v))
 
@@ -30,18 +21,20 @@ def braket(v:List[int])->QVec:
   z[int(''.join(map(str,v)),base=2)]=1
   return QVec(z)
 
-def mkstate(bas:List[np.complex])->QVec:
-  nqbits=len(bas)
-  assert float(int(nqbits))==nqbits, \
-    f"State basis should contain 2^N elements, not {len(bas)}"
-  return QVec(bas)
-
 def tprod(qvs:List[QVec])->QVec:
   acc:Optional[QVec]=None
   for qv in qvs:
     acc=QVec(np.kron(acc.mat,qv.mat)) if acc is not None else qv
   assert acc is not None
   return acc
+
+def nqbits(v:QVec)->int:
+  n=log2(v.mat.shape[0])
+  assert float(int(n))==n, \
+    f"QVec should contain (2^N)^2 elements, not ({v.mat.shape[0]}^2)"
+  return int(n)
+
+
 
 def pairop(a:QVecOp,b:QVecOp)->QVecOp:
   return QTProd(a,b)
@@ -66,6 +59,7 @@ def qvecop2mat(op:QVecOp)->np.array:
     assert False, f"Invalid QVecOp: {op}"
 
 
+# README:FBEGIN
 def opX()->QBitOp:
   return QBitOp(np.array([[0.0,1.0],[1.0,0.0]]))
 def opY()->QBitOp:
@@ -83,6 +77,7 @@ def opCNOT()->QVecOp:
                           [0.0,1.0,0.0,0.0],
                           [0.0,0.0,0.0,1.0],
                           [0.0,0.0,1.0,0.0]]))
+# README:FEND
 
 def nqbitsG(g:QGraph, qid:QId)->int:
   node:Union[QVecOp,QInput]=g.graph[qid][0]
