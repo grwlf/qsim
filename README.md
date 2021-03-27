@@ -303,7 +303,7 @@ InputId = Union[int,tuple]
 c = circuit(qbit_count=3)
 c.initialize([0,0,0])
 c.x.on([0])               # Применить операцию X к кубиту 0
-c.cnot.on([0,1])          # Применить операцию CNOT к кубиту 1
+c.cnot.on([0,1])          # Применить операцию CNOT к кубитам 0 и 1
 
 opI3 = pairop(opI(),pairop(opI(),opI()))
 c.op(opI3).on([(0,1),2])  # Применить 3х-кубитную ID к кубитам 0,1 и 2
@@ -320,6 +320,8 @@ try:
 except KeyError:
   pass
 ```
+
+TODO
 
 ## Расширения
 
