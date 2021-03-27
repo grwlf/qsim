@@ -27,8 +27,10 @@ The tests are in [./tests/test\_all.py](./tests/test_all.py)
     install`.
   - It is possible to use this package in-place `export
     PYTHONPATH=$(pwd)/src:$PYTHONPATH`.
+  - To typecheck the project run `make typecheck`. `pytest` and
+    `MyPy`-plugin are required.
   - README files are to be compiled with the `codebraid` utility. Use
-    the Makefile rule to do it `make README.md`
+    the Makefile rule to do it `make docs`
   - To run the tests use `pytest`.
   - The project also contains [expressions](./shell.nix) for the
     [Nix](https://nixos.org/nix) package manager. One could use its

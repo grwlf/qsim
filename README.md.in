@@ -29,8 +29,10 @@ Install
 * Use standard Python tools to install this project:
   `python3 setup.py install`.
 * It is possible to use this package in-place `export PYTHONPATH=$(pwd)/src:$PYTHONPATH`.
+* To typecheck the project run `make typecheck`. `pytest` and
+  `MyPy`-plugin are required.
 * README files are to be compiled with the `codebraid` utility. Use the Makefile
-  rule to do it `make README.md`
+  rule to do it `make docs`
 * To run the tests use `pytest`.
 * The project also contains [expressions](./shell.nix) for the
   [Nix](https://nixos.org/nix) package manager. One could use its `nix-shell`

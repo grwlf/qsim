@@ -13,6 +13,11 @@ README-RU.md: README-RU.md.in Makefile $(SRC)
 		-f markdown -t markdown --no-cache --overwrite --standalone \
 		--self-contained -t gfm -o $@ $<
 
+.PHONY: tc typecheck
+tc: typecheck
+typecheck:
+	pytest --mypy -m mypy
+
 .PHONY: docs
 docs: README.md README-RU.md
 
