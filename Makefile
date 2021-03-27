@@ -1,7 +1,7 @@
 SRC = $(shell find -name '*\.py')
 
 .PHONY: all
-all: docs
+all: typecheck wheel docs
 
 README.md: README.md.in Makefile $(SRC)
 	codebraid pandoc \
@@ -20,4 +20,8 @@ typecheck:
 
 .PHONY: docs
 docs: README.md README-RU.md
+
+.PHONY: wheel
+wheel: Makefile $(SRC)
+	python3 setup.py sdist bdist_wheel --universal
 

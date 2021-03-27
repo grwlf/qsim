@@ -28,14 +28,16 @@ Install
 
 * Use standard Python tools to install this project:
   `python3 setup.py install`.
-* It is possible to use this package in-place `export PYTHONPATH=$(pwd)/src:$PYTHONPATH`.
-* To typecheck the project run `make typecheck`. `pytest` and
-  `MyPy`-plugin are required.
+* It should possible to import this package in-place after setting the
+  PYTHONPATH: `export PYTHONPATH=$(pwd)/src:$PYTHONPATH`.
+* To build the wheel package, type `make wheel`.
+* To typecheck the project run `make typecheck`. The `pytest` package and
+  the `MyPy`-plugin are required.
 * README files are to be compiled with the `codebraid` utility. Use the Makefile
   rule to do it `make docs`
 * To run the tests use `pytest`.
 * The project also contains [expressions](./shell.nix) for the
-  [Nix](https://nixos.org/nix) package manager. One could use its `nix-shell`
+  [Nix](https://nixos.org/nix) package manager. One may use its `nix-shell`
   command to enter the development environment with all the dependencies
   installed.
 

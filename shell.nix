@@ -52,6 +52,7 @@ let
       ipdb
       hypothesis
       scipy
+      wheel
     ];
   python-with-my-packages = pkgs.python37.withPackages my-python-packages;
 
@@ -77,6 +78,8 @@ let
       if test -f ./env.sh ; then
         . ./env.sh
       fi
+      # 1980 workaround https://github.com/NixOS/nixpkgs/issues/270#issuecomment-467583872
+      export SOURCE_DATE_EPOCH=315532800
     '';
   };
 
