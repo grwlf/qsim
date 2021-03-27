@@ -1,47 +1,43 @@
 # QSim
 
-QSim - простой квантовый симулятор, написанный на языке Python3 с
-использованием библиотеки статической типизации
-[MyPy](https://github.com/python/mypy). Проект написан в по заданию,
-полученному в ходе собеседования.
+\[EN\]\[[RU](./README-RU.md)\]
 
-Симулятор состоит из трех основных модулей:
+QSim - is a simple quantum simulator, written in Python3 with the
+extensive use of [MyPy](https://github.com/python/mypy) static typing.
+This project was originally a part of a job interview.
 
-  - [qsim.types](./src/qsim/types.py) Объявления типов данных.
-  - [qsim.core](./src/qsim/core.py) Базовый функцинальный API.
-  - [qsim.api1](./src/qsim/api1.py) Oбъектно-ориентированный API.
+QSim consists of the following modules:
 
-Тесты содержатся в файле [./tests/test\_all.py](./tests/test_all.py)
+  - [qsim.types](./src/qsim/types.py) Data type declaration.
+  - [qsim.core](./src/qsim/core.py) Core functional API.
+  - [qsim.api1](./src/qsim/api1.py) Object-oriented API wrapper.
 
-# Содержание
+The tests are in [./tests/test\_all.py](./tests/test_all.py)
 
-1.  [Установка](#установка)
-2.  [Примеры](#примеры)
-3.  [Функционал](#функционал)
-4.  [Ссылки](#ссылки)
+# Contents
 
-# Установка
+1.  [Install](#install)
+2.  [Examples](#examples)
+3.  [Details](#details)
+4.  [References](#references)
 
-  - Проект может быть собран с использрванием стандартных средств
-    Python: `python3 setup.py install`.
-  - Также возможно использование без установки, для чего достаточно
-    выставить переменную `export
+# Install
+
+  - Use standard Python tools to install this project: `python3 setup.py
+    install`.
+  - It is possible to use this package in-place `export
     PYTHONPATH=$(pwd)/src:$PYTHONPATH`.
-  - Для сборки документации (файла README.md) используюется утлилита
-    codebraid: `make README.md`
-  - Для запуска тестов следует выполнить команду `pytest`.
-  - Проект также содержит [правила](./shell.nix) для пакетного менеджера
-    [Nix](https://nixos.org/nix), с помощью которых можно открыть
-    окружение разработика со всеми установленными зависимостями.
-    Для этого достаточно выполнить команду `nix-shell` в корневой
-    директории проекта.
+  - README files are to be compiled with the `codebraid` utility. Use
+    the Makefile rule to do it `make README.md`
+  - To run the tests use `pytest`.
+  - The project also contains [expressions](./shell.nix) for the
+    [Nix](https://nixos.org/nix) package manager. One could use its
+    `nix-shell` command to enter the development environment with all
+    the dependencies installed.
 
-# Примеры
+# Examples
 
-### Обзор ОО-API
-
-Соответствует пп.2.1 (основная задача),2.2.1(установка количества кубит
-в стартовом состоянии)
+### Object oriented API
 
 ``` python numberLines
 from qsim import circuit
@@ -60,8 +56,8 @@ print(c.opmatrix(0,1).mat)
  [ 0.70710678  0.         -0.70710678 -0.        ]]
 ```
 
-*Замечание: результат отличается от примера в п.2.1 условия. Вероятно,
-разница в порядке нумерации кубитов. Изменим порядок нумерации:*
+*Note: the result differs from the specification. The reason is probably
+in the qubit numbering scheme:*
 
 ``` python numberLines
 print(c.opmatrix(1,0).mat)
@@ -74,9 +70,7 @@ print(c.opmatrix(1,0).mat)
  [ 0.70710678 -0.70710678  0.         -0.        ]]
 ```
 
-### Параметризирвоанные операции
-
-Соответствует пп.2.2.2
+### Parametrized operations
 
 ``` python numberLines
 from math import pi
@@ -91,9 +85,7 @@ print(s[0].mat)
 [0.000000e+00+0.j 6.123234e-17+1.j]
 ```
 
-### Двухкубитные операции
-
-Соответствует пп.2.2.3
+### 2-qubit operations
 
 ``` python numberLines
 c = circuit(qbit_count=2)
@@ -107,7 +99,7 @@ print(s[(0,1)].mat)
 [0. 0. 1. 0.]
 ```
 
-#### Использование базового функционального API.
+#### Functional API
 
 ``` python numberLines
 from qsim import QGraph, addinput, addop, opX, opH, schedule, opmatrix, pairop
@@ -125,13 +117,13 @@ print(s[o1].mat)
  [ 0.70710678  0.         -0.70710678  0.        ]]
 ```
 
-# Функционал
+# Details
 
-## Типы данных
+## Data types
 
-В симуляторе используются следующие группы данных:
+Simulator uses the following data types:
 
-1.  Типы данных для задания условий симуляции:
+1.  Data types for the input data:
     
     ``` python numberLines
     
@@ -151,19 +143,19 @@ print(s[o1].mat)
       b:QVecOp
     ```
     
-      - `QVec` служит для задания векторов состояний. Элементы вектора
-        состояний описывают коэффициенты при базисных векторах,
-        соответствующих состоянию системы из N кубитов. Длина
-        вектора должна быть 2^N. Пример: элементы вектора
-        `QVec([a,b,c,d])` соответствуют коэффициентам при базисных
-        векторах в таком порядке: `|00>`, `|01>`, `|10>`, `|11>`.
-      - `QVecOp` тип-синоним, перечисляющий варианты описания квантовых
-        операций:
-          - `QBitOp` для задания операции в виде матрицы
-          - `QTProd` для задания операции в виде вертикальной комбинации
-            других операций
+      - `QVec` encodes qubit states and operation state matrices. The
+        elemenents describe basis multiplying coefficients. To descibe N
+        qubits, the lengs of the state vector should have the length of
+        `2**N`. Example: the elements of `QVec([a,b,c,d])` correspond to
+        the multipliers of `|00>`, `|01>`, `|10>`, `|11>` basis vectors,
+        in this order.
+      - `QVecOp` is an alias describing the union of the following
+        types:
+          - `QBitOp` direclty declares an operation using the operation
+            matrix
+          - `QTProd` describes a tensor product of two qubit operation
 
-2.  Типы данных для выполнения симуляции:
+2.  Data types to handle the simulation process
     
     ``` python numberLines
     
@@ -178,30 +170,27 @@ print(s[o1].mat)
       graph:Dict[QId, Tuple[Union[QVecOp,QInput], List[QId]]]
     ```
     
-      - `QGraph` Описывает направленный граф квантовых операций, граф
-        задан перечислением вершин и рёбер (через идентификаторы
-        входных вершин). С узлами графа ассоциированы квантовые
-        операции. Вспомогательные типы данных:
-          - `QId` - Идентификатор узла. Тип-обертка над числом для
-            удобства статической типизации.
-          - `QInput` - Тип входного узла, значение которого должно быть
-            задано пользователем перед началом симуляции.
+      - `QGraph` declares the directed graph of quantum operations.
+          - `QId` - the integer identifier of a node, to aid the static
+            typing.
+          - `QInput` - type of input nodes which don’t carry associated
+            operations.
 
-## Функции базового API
+## Functional API
 
-Основной функционал реализован в модуле `qsim.core`. Также как и с
-типами, можно выделить следующие основные группы функций:
+The QSim base functions reside in the `qsim.core`. One could split it
+into the following logical parts:
 
-1.  Функции для задания условий симуляции
+1.  Functions for defining input conditions.
     
-    1.  Функции для операций над векторами состояний. Вектроы состояний
-        можно создать функциями `mkvec` и `braket`. Из операций в
-        отдельную функцию вынесены: получение тензорного
-        произведения `tprod` и получение числа кубитов,
-        задаваемых данным вектромо состояний. Функция `braket`
-        реализована упрощенно, поддерживаются только значения `0` и
-        `1`: Пример: инициализация вектора состояний двух кубитов,
-        соответствующего значениям 0 и 1.
+    1.  Functions for setting up state vectors. One could create qubit
+        state vectors with `mkvec` and `braket`. For operations, ,
+        `pairop` to combine operations using the Kronecker product.
+        
+        `braket` function is currently limited to accept only `0` and
+        `1` values.
+        
+        Example: different initializions of the 2 qubit state vector
         
         ``` python numberLines
         from qsim.core import braket
@@ -217,17 +206,17 @@ print(s[o1].mat)
         1 1 : QVec(mat=array([0., 0., 0., 1.]))
         ```
     
-    2.  Функции для операций над операциями. Простую операцию можно
-        создавать из матрицы операции с помощью `qbitop` и из
-        других операций с помощью `pairop`.
+    2.  Functions for manipulating operations. One could create simple
+        operation with `qbitop` or combine several operations into one
+        with `pairop`. `nqbitsOp` could be used to get the required
+        number of input qubits.
 
-2.  Операции с графом квантовых вычислений. В базовом API работа с
-    графом производится в три этапа: формирование, планирование,
-    свертка.
+2.  Functions for defining the graph of quantum operations. Base API
+    contains basic methods of creation, planning and execution of the
+    simulation.
     
-    1.  Для формирования графа используются функции `addinput` и
-        `addop`. Пример: задание графа из одной комбинированной
-        2-хкубитной операции с двумя однокубитными входами.
+    1.  Functions `addinput` and `addop` create nodes of the computaion
+        graph. Example: 2-qubit operation with two 1-qubit inputs.
         
         ``` python numberLines
         from qsim import QGraph, addinput, addop, opX, opH, opI, pairop
@@ -244,16 +233,15 @@ print(s[o1].mat)
                [1., 0.]]))), [0, 1])})
         ```
     
-    2.  Планирование вычислений представлено функцией `schedule` которая
-        производит топологическую сортировку графа и возвращает список
-        идентификаторов узлов, задавая тем самым очередность
-        вычислений.
+    2.  Scheduling the computation is performed by the `schedule`
+        function. It is a simple algorithm which runs the topological
+        sort and returns the list of nodes in the order of execution.
     
-    3.  Выполнение вычислений производят функции `evaluate` и
-        `opmatrix`. Они могут быть использованы независимо друг от
-        друга.
+    3.  `evaluate` and `opmatrix` run the simulation and compute the
+        operation state matrix. They could be used independently from
+        each other.
 
-3.  Функции предопределенных квантовых операций:
+3.  There following operations are pre-defined:
     
     ``` python numberLines
     
@@ -276,42 +264,37 @@ print(s[o1].mat)
                               [0.0,0.0,1.0,0.0]]))
     ```
 
-## Функции объектно-ориентированного API
+## Object oriented API
 
-Дизайн объектно ориентированного API задан в исходном ТЗ. Для его
-выполнения, к типам данных добавлен тип именования состояния
-кубитов:
+OO API adds the following new type for referencing the qubit states.
 
 ``` python numberLines
 
 InputId = Union[int,tuple]
 ```
 
-Примеры использования:
+Example:
 
 ``` python numberLines
-0           # Состояние кубита 0
-1           # Состояние кубита 1
-(0,1)       # Связанное состояние кубитов 0 и 1
-((0,1),2)   # Связанное состояние кубитов 0,1 и 2
+0           # Refers to the state of qubit 0
+1           # Refers to the state of qubit 1
+(0,1)       # Refers to the entangled state of qubits 0 and 1
+((0,1),2)   # Entangled state for the qubits 0,1 and 2
 ```
 
-Имя состояния кубитов используется для указания того, к какому состоянию
-применить очередную операцию.
+State names specifiy the state to modify next:
 
 ``` python numberLines
 c = circuit(qbit_count=3)
 c.initialize([0,0,0])
-c.x.on([0])               # Применить операцию X к кубиту 0
-c.cnot.on([0,1])          # Применить операцию CNOT к кубитам 0 и 1
+c.x.on([0])               # Apply X to the state 0
+c.cnot.on([0,1])          # Apply CNOT to the entangled state of  (0,1)
 
 opI3 = pairop(opI(),pairop(opI(),opI()))
-c.op(opI3).on([(0,1),2])  # Применить 3х-кубитную ID к кубитам 0,1 и 2
+c.op(opI3).on([(0,1),2])  # Apply 3-qubit ID to the state of 0,1 and 2
 ```
 
-После того как кубиты стали связанными в ходе применения операций,
-объектно-ориентированное API не разрешает использовать кубиты
-по-отдельности.
+OO API prevents user from accessing qubits which are already entangled:
 
 ``` python numberLines
 try:
@@ -321,56 +304,7 @@ except KeyError:
   pass
 ```
 
-TODO
-
-## Расширения
-
-Соответствует пп.2.2.4.
-
-### Поддержка новых типов операций
-
-Для поддержки новых операций в базовом API достаточно описать их в виде
-функции с использованием корректных типов данных.
-
-Для добавление таких операций в объектно-ориентированное API достаточно
-пронаследоваться от класса `Circuit` и доопределить в наследнике новую
-функцию или свойство.
-
-### Поддержка оптимизатора цепочек
-
-Поскольку в качестве базовой структуры операций в данном симуляторе
-используется граф, в нем легко могут быть доопределены алгоритмы из
-репертуара теории графов.
-
-``` python numberLines
-g=QGraph({})
-i1,g=addinput(g,2)
-o1,g=addop(g,pairop(opH(),opX()),[i1])
-...
-g2=optimize(g) # Callable[[QGraph],QGraph]
-...
-s=evaluate(g2,schedule(g2))
-print(s[o1].mat)
-```
-
-### Поддержка новых типов бэкендов
-
-Для поддержки новых типов бэкендов необходимо согласованно добавить
-соответствующие функции планировки и расчетов. К примеру,
-вычисление на воображаемом FPGA-процессоре может быть записано
-в базовом API так.
-
-``` python numberLines
-with fpga_resourse('/dev/fpga1') as r:
-  g=QGraph({})
-  i1,g=addinput(g,2)
-  o1,g=addop(g,pairop(opH(),opX()),[i1])
-  ...
-  s=evaluate_FPGA(g,r,schedule_FPGA(g,r))
-  print(s[o1].mat)
-```
-
-# Ссылки
+# References
 
 1.  [Linear Algebra for Quantum
     Computation](https://link.springer.com/content/pdf/bbm%3A978-1-4614-6336-8%2F1.pdf)
