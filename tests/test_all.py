@@ -156,3 +156,16 @@ def test_api1_notcnot():
   s = c.execute()
   print(s[(0,1)].mat)
 
+def test_api1_tails():
+  c = circuit(qbit_count=3)
+  c.initialize([0,0,0])
+  c.x.on([0])
+  c.h.on([1])
+  c.cnot.on([0,1])
+  c.op(pairop(opI(),pairop(opI(),opI()))).on([(0,1),2])
+  try:
+    c.h.on([1])
+    raise RuntimeError('Should fail')
+  except KeyError:
+    pass
+

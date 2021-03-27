@@ -9,7 +9,9 @@ from numpy import array, kron
 
 from itertools import chain, combinations
 
+# README:IBEGIN
 InputId = Union[int,tuple]
+# README:IEND
 
 class OpHandle:
 
@@ -23,6 +25,8 @@ class OpHandle:
     qid, self.circuit.graph = \
       addop(self.circuit.graph, self.op,
             [self.circuit.tails[x] for x in input_id_l])
+    for i in input_id_l:
+      del self.circuit.tails[i]
     self.circuit.tails[input_id_2] = qid # type:ignore
 
 class Circuit:
@@ -52,26 +56,29 @@ class Circuit:
     else:
       assert False, "Invalid initial state representation"
 
+
+  def op(self, op:QVecOp)->OpHandle:
+    return OpHandle(self, op)
   @property
   def x(self)->OpHandle:
-    return OpHandle(self, opX())
+    return self.op(opX())
   @property
   def y(self)->OpHandle:
-    return OpHandle(self, opY())
+    return self.op(opY())
   @property
   def z(self)->OpHandle:
-    return OpHandle(self, opZ())
+    return self.op(opZ())
   @property
   def h(self)->OpHandle:
-    return OpHandle(self, opH())
+    return self.op(opH())
   @property
   def i(self)->OpHandle:
-    return OpHandle(self, opI())
+    return self.op(opI())
   def r(self, phi:float)->OpHandle:
-    return OpHandle(self, opR(phi))
+    return self.op(opR(phi))
   @property
   def cnot(self)->OpHandle:
-    return OpHandle(self, opCNOT())
+    return self.op(opCNOT())
 
   def execute(self)->Dict[Union[int,tuple],QVec]:
     assert self.state0 is not None, "Circuit is not initialized"
